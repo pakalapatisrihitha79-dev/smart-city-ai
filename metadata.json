@@ -1,0 +1,6 @@
+{
+  "name": "CityMind AI",
+  "description": "Predictive, mobile-first AI smart-city intelligence system for NovaCity with living city interface.",
+  "requestFramePermissions": ["geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
