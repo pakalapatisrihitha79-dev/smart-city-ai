@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useCity } from "./context/CityContext";
 import { HeaderNav } from "./components/HeaderNav";
 import { CityHomePage } from "./components/CityHomePage";
+import { CityBrainCentral } from "./components/CityBrainCentral";
 import { DigitalTwinHub } from "./components/DigitalTwinHub";
 import { LivingCityPulse } from "./components/LivingCityPulse";
 import { CityBriefing } from "./components/CityBriefing";
@@ -17,6 +18,15 @@ import { SmartTravel } from "./components/SmartTravel";
 import { EnvironmentGridDashboard } from "./components/EnvironmentGridDashboard";
 import { CityRiskRadar } from "./components/CityRiskRadar";
 import { CityMemory } from "./components/CityMemory";
+import { UrbanHeatIntelligence } from "./components/UrbanHeatIntelligence";
+import { WaterMindIntelligence } from "./components/WaterMindIntelligence";
+import { SmartWasteIntelligence } from "./components/SmartWasteIntelligence";
+import { EmergencyResponseOptimizer } from "./components/EmergencyResponseOptimizer";
+import { UrbanPlanningSimulator } from "./components/UrbanPlanningSimulator";
+import { BudgetAllocationSimulator } from "./components/BudgetAllocationSimulator";
+import { ClosedLoopLifecycle } from "./components/ClosedLoopLifecycle";
+import { FutureCitySimulator } from "./components/FutureCitySimulator";
+import { RootCauseAnalysisModal } from "./components/RootCauseAnalysisModal";
 import { SustainabilityCenter } from "./components/SustainabilityCenter";
 import { CityAlertsCenter } from "./components/CityAlertsCenter";
 import { DemoControlCenterModal } from "./components/DemoControlCenterModal";
@@ -30,6 +40,7 @@ import { WhatWouldYouDoModal } from "./components/WhatWouldYouDoModal";
 import { FixCityModal } from "./components/FixCityModal";
 import { CityStoryModal } from "./components/CityStoryModal";
 import { DemoPlaybookModal } from "./components/DemoPlaybookModal";
+import { SecureLoginGate } from "./components/SecureLoginGate";
 
 import {
   Home,
@@ -48,10 +59,19 @@ import {
   Compass,
   Layers,
   Sparkles,
+  Coins,
+  Droplets,
+  Flame,
+  Trash2,
+  Siren,
+  GitBranch,
+  RefreshCw,
 } from "lucide-react";
 
 export default function App() {
   const {
+    user,
+    isAuthenticated,
     currentZone,
     currentScenario,
     isAuthorityMode,
@@ -64,7 +84,16 @@ export default function App() {
   // Navigation State - Home is default on initial opening
   const [activeTab, setActiveTab] = useState<
     | "home"
+    | "brain"
     | "twin"
+    | "futurecity"
+    | "planning"
+    | "budget"
+    | "closedloop"
+    | "water"
+    | "heat"
+    | "waste"
+    | "emergency"
     | "briefing"
     | "map"
     | "copilot"
@@ -86,6 +115,11 @@ export default function App() {
   const [isAccessibilityOpen, setIsAccessibilityOpen] = useState(false);
   const [isDemoControlOpen, setIsDemoControlOpen] = useState(false);
 
+  // If user is not logged in / authenticated, enforce the Secure Login Gate
+  if (!user || !isAuthenticated) {
+    return <SecureLoginGate />;
+  }
+
   return (
     <div
       className={`min-h-screen bg-[#0A0C10] text-[#E0E6ED] flex flex-col font-sans selection:bg-teal-500 selection:text-black ${
@@ -100,6 +134,8 @@ export default function App() {
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenAccessibility={() => setIsAccessibilityOpen(true)}
         onOpenDemoControl={() => setIsDemoControlOpen(true)}
+        onSelectTab={(tab) => setActiveTab(tab as any)}
+        onOpenCivicReport={() => setIsCivicReportOpen(true)}
       />
 
       {/* Guided Heavy Rain / Scenario Alert Banner */}
@@ -156,7 +192,16 @@ export default function App() {
         <nav className="flex gap-1.5 overflow-x-auto no-scrollbar bg-[#0D1117]/90 p-1.5 rounded-2xl border border-white/10 text-xs font-bold">
           {[
             { id: "home", label: t("homeHub", "Home Hub"), icon: Home, highlight: true },
+            { id: "brain", label: t("cityBrainTab", "🧠 City Brain"), icon: Sparkles, highlight: true },
             { id: "twin", label: t("digitalTwin", "Digital Twin"), icon: Layers },
+            { id: "futurecity", label: t("futureCityTab", "🔮 Future City 2035"), icon: Compass },
+            { id: "planning", label: t("urbanPlannerTab", "🏗️ Urban Planner"), icon: Building2 },
+            { id: "budget", label: t("budgetAiTab", "💰 Budget AI"), icon: Coins },
+            { id: "closedloop", label: t("closedLoopTab", "🔄 Closed Loop"), icon: RefreshCw },
+            { id: "water", label: t("waterMindTab", "🚰 WaterMind"), icon: Droplets },
+            { id: "heat", label: t("heatIslandTab", "🌡️ Heat Island"), icon: Flame },
+            { id: "waste", label: t("smartWasteTab", "♻️ Smart Waste"), icon: Trash2 },
+            { id: "emergency", label: t("emergencyAiTab", "🚨 Emergency AI"), icon: Siren },
             { id: "briefing", label: t("briefingPulse", "Briefing & Pulse"), icon: Activity },
             { id: "map", label: t("liveCityMap", "Live City Map"), icon: MapPin },
             { id: "copilot", label: t("cityCopilot", "CityCopilot AI"), icon: Bot },
@@ -203,8 +248,41 @@ export default function App() {
           />
         )}
 
-        {/* Tab 0: NovaCity Digital Twin */}
+        {/* Tab 0: City Brain — Central AI Cognition Hub */}
+        {activeTab === "brain" && (
+          <CityBrainCentral
+            onNavigateTab={(tab) => setActiveTab(tab as any)}
+            onOpenCivicReport={() => setIsCivicReportOpen(true)}
+            onOpenSimulator={() => setActiveTab("simulator")}
+          />
+        )}
+
+        {/* Tab 1: NovaCity Digital Twin */}
         {activeTab === "twin" && <DigitalTwinHub />}
+
+        {/* Tab: Future City 2035 Horizon Simulator */}
+        {activeTab === "futurecity" && <FutureCitySimulator />}
+
+        {/* Tab: AI Urban Planning Simulator */}
+        {activeTab === "planning" && <UrbanPlanningSimulator />}
+
+        {/* Tab: AI Budget Allocation Simulator */}
+        {activeTab === "budget" && <BudgetAllocationSimulator />}
+
+        {/* Tab: Closed-Loop City Resolution */}
+        {activeTab === "closedloop" && <ClosedLoopLifecycle />}
+
+        {/* Tab: Smart Water Intelligence */}
+        {activeTab === "water" && <WaterMindIntelligence />}
+
+        {/* Tab: Urban Heat Island Intelligence */}
+        {activeTab === "heat" && <UrbanHeatIntelligence />}
+
+        {/* Tab: Smart Waste Intelligence */}
+        {activeTab === "waste" && <SmartWasteIntelligence />}
+
+        {/* Tab: Emergency Response Dispatch Optimizer */}
+        {activeTab === "emergency" && <EmergencyResponseOptimizer />}
 
         {/* Tab 1: Briefing & Pulse */}
         {activeTab === "briefing" && (
@@ -326,6 +404,7 @@ export default function App() {
       <DemoControlCenterModal isOpen={isDemoControlOpen} onClose={() => setIsDemoControlOpen(false)} />
 
       {/* Digital Twin Specialized Modals */}
+      <RootCauseAnalysisModal />
       <ExplainableAIModal />
       <AIConfidenceModal />
       <WhatWouldYouDoModal />

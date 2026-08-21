@@ -12,15 +12,17 @@ import {
   CityDNA,
   DecisionLogEntry,
   SavedWhatIfScenario,
+  AuthorizedRegistryUser,
 } from "../types";
 import {
   BASE_NOVACITY_ZONES,
   INITIAL_MONITORED_AREAS,
   INITIAL_CIVIC_REPORTS,
   INITIAL_ALERTS,
+  INITIAL_AUTHORIZED_REGISTRY,
 } from "../data/mockData";
 import { simulateCityState, calculateCityDNA } from "../utils/cityEngine";
-import { SupportedLanguage, getTranslation } from "../utils/translations";
+import { SupportedLanguage, getTranslation, translateEntityName } from "../utils/translations";
 
 export interface AccessibilitySettings {
   highContrast: boolean;
@@ -42,10 +44,15 @@ export interface AlertRule {
 }
 
 interface CityContextType {
-  // Auth & Profile
+  // Auth & Authorized Access Control
   user: UserAccount | null;
   currentUser: UserAccount | null;
-  login: (email: string, pass?: string) => boolean;
+  isAuthenticated: boolean;
+  authorizedRegistry: AuthorizedRegistryUser[];
+  isEmailAuthorized: (email: string) => boolean;
+  getAuthorizedUser: (email: string) => AuthorizedRegistryUser | undefined;
+  registerAuthorizedUser: (userData: AuthorizedRegistryUser) => { success: boolean; error?: string };
+  login: (email: string, pass?: string) => { success: boolean; error?: string };
   register: (nameOrData: string | Partial<UserAccount>, email?: string, areaId?: string) => boolean;
   logout: () => void;
   updateProfile: (data: Partial<UserAccount>) => void;
@@ -90,6 +97,10 @@ interface CityContextType {
   closeExplainModal: () => void;
   isConfidenceModalOpen: boolean;
   setIsConfidenceModalOpen: (open: boolean) => void;
+  isRootCauseModalOpen: boolean;
+  setIsRootCauseModalOpen: (open: boolean) => void;
+  openRootCauseModal: () => void;
+  closeRootCauseModal: () => void;
 
   // Interactive Labs & Game Modes
   isDecisionModalOpen: boolean;
@@ -123,6 +134,7 @@ interface CityContextType {
   setIsLanguageModalOpen: (open: boolean) => void;
   openLanguageModal: () => void;
   t: (key: string, fallback?: string) => string;
+  translateEntity: (name: string) => string;
   accessibility: AccessibilitySettings;
   accessibilitySettings: AccessibilitySettings;
   updateAccessibility: (settings: Partial<AccessibilitySettings>) => void;
@@ -149,44 +161,47 @@ interface CityContextType {
 const CityContext = createContext<CityContextType | undefined>(undefined);
 
 export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  // 1. Auth State
-  const [user, setUser] = useState<UserAccount | null>(() => {
-    const saved = localStorage.getItem("citymind_user");
+  // 1. Authorized Registry State
+  const [authorizedRegistry, setAuthorizedRegistry] = useState<AuthorizedRegistryUser[]>(() => {
+    const saved = localStorage.getItem("citymind_authorized_registry");
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
       } catch (e) {}
     }
-    return {
-      id: "usr-demo",
-      name: "Alex Rivera",
-      email: "alex.rivera@novacity.org",
-      language: "en",
-      city: "NovaCity",
-      preferredArea: "Central District",
-      notificationPrefs: {
-        traffic: true,
-        weather: true,
-        pollution: true,
-        water: true,
-        electricity: false,
-        civic: true,
-        emergency: true,
-      },
-      greenCitizenScore: 420,
-      goals: ["Reduce travel time", "Use public transport", "Report civic issues"],
-      role: "citizen",
-      isEmailVerified: true,
-    };
+    return INITIAL_AUTHORIZED_REGISTRY;
+  });
+
+  useEffect(() => {
+    localStorage.setItem("citymind_authorized_registry", JSON.stringify(authorizedRegistry));
+  }, [authorizedRegistry]);
+
+  // 2. Auth State (Starts null requiring login at application start)
+  const [user, setUser] = useState<UserAccount | null>(() => {
+    const saved = localStorage.getItem("citymind_auth_user");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed && parsed.email) {
+          return parsed;
+        }
+      } catch (e) {}
+    }
+    return null;
   });
 
   useEffect(() => {
     if (user) {
-      localStorage.setItem("citymind_user", JSON.stringify(user));
+      localStorage.setItem("citymind_auth_user", JSON.stringify(user));
     } else {
-      localStorage.removeItem("citymind_user");
+      localStorage.removeItem("citymind_auth_user");
     }
   }, [user]);
+
+  const isAuthenticated = !!user;
 
   // 2. Monitored Areas
   const [monitoredAreas, setMonitoredAreas] = useState<MonitoredArea[]>(() => {
@@ -377,6 +392,9 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const closeExplainModal = () => setExplainableMetric(null);
 
   const [isConfidenceModalOpen, setIsConfidenceModalOpen] = useState(false);
+  const [isRootCauseModalOpen, setIsRootCauseModalOpen] = useState(false);
+  const openRootCauseModal = () => setIsRootCauseModalOpen(true);
+  const closeRootCauseModal = () => setIsRootCauseModalOpen(false);
   const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
   const [isFixCityOpen, setIsFixCityOpen] = useState(false);
   const [isStoryModeOpen, setIsStoryModeOpen] = useState(false);
@@ -540,6 +558,10 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
     return fallback || translated || key;
   };
 
+  const translateEntity = (name: string): string => {
+    return translateEntityName(name, language);
+  };
+
   const [accessibility, setAccessibility] = useState<AccessibilitySettings>({
     highContrast: false,
     largeText: false,
@@ -638,32 +660,138 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setUserRole((prev) => (prev === "authority" ? "citizen" : "authority"));
   };
 
-  // Auth Methods
-  const login = (email: string) => {
-    const nameFromEmail = email.split("@")[0] || "Citizen";
-    const formattedName = nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1);
-    setUser({
+  // Auth & Authorized Access Control Methods
+  const isEmailAuthorized = (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    return authorizedRegistry.some(
+      (u) => u.email.toLowerCase() === cleanEmail && u.status === "Active"
+    );
+  };
+
+  const getAuthorizedUser = (email: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    return authorizedRegistry.find(
+      (u) => u.email.toLowerCase() === cleanEmail
+    );
+  };
+
+  const registerAuthorizedUser = (userData: AuthorizedRegistryUser) => {
+    const cleanEmail = userData.email.trim().toLowerCase();
+    const existingIdx = authorizedRegistry.findIndex(
+      (u) => u.email.toLowerCase() === cleanEmail
+    );
+
+    const registeredRecord: AuthorizedRegistryUser = {
+      ...userData,
+      email: cleanEmail,
+      status: "Active",
+      registeredAt: userData.registeredAt || new Date().toISOString(),
+    };
+
+    let updatedRegistry = [...authorizedRegistry];
+    if (existingIdx >= 0) {
+      updatedRegistry[existingIdx] = registeredRecord;
+    } else {
+      updatedRegistry.push(registeredRecord);
+    }
+    setAuthorizedRegistry(updatedRegistry);
+
+    const newUserAccount: UserAccount = {
       id: "usr-" + Date.now(),
-      name: formattedName,
-      email,
+      name: registeredRecord.name,
+      email: registeredRecord.email,
+      role: registeredRecord.role,
+      authorizationLevel: registeredRecord.authorizationLevel,
+      department: registeredRecord.department,
+      occupation:
+        registeredRecord.occupation ||
+        (registeredRecord.role === "authority" ? "Municipal Operations Officer" : "Resident Citizen"),
+      phone: registeredRecord.phone || "",
       language: language,
       city: "NovaCity",
-      preferredArea: "Central District",
+      preferredArea: registeredRecord.preferredArea || "Central District",
       notificationPrefs: {
         traffic: true,
         weather: true,
         pollution: true,
         water: true,
-        electricity: false,
+        electricity: true,
         civic: true,
         emergency: true,
       },
-      greenCitizenScore: 100,
-      goals: ["Monitor air quality", "Report civic issues"],
-      role: "citizen",
+      greenCitizenScore: registeredRecord.role === "authority" ? 520 : 260,
+      goals: ["Monitor city health", "Manage civic services", "Track environmental resilience"],
       isEmailVerified: true,
-    });
-    return true;
+      registeredAt: registeredRecord.registeredAt,
+    };
+
+    setUser(newUserAccount);
+    if (registeredRecord.role === "authority") {
+      setUserRole("authority");
+    } else {
+      setUserRole("citizen");
+    }
+
+    return { success: true };
+  };
+
+  const login = (email: string, pass?: string) => {
+    const cleanEmail = email.trim().toLowerCase();
+    const regUser = authorizedRegistry.find(
+      (u) => u.email.toLowerCase() === cleanEmail
+    );
+
+    if (!regUser) {
+      return {
+        success: false,
+        error: `Access Denied: The email "${email}" is not registered in the NovaCity Authorized Identity Directory. Unregistered email IDs are restricted from accessing or managing city information.`,
+      };
+    }
+
+    if (regUser.status === "Restricted") {
+      return {
+        success: false,
+        error: `Access Restricted: The account for "${email}" has been restricted by City Security Protocol.`,
+      };
+    }
+
+    const authUserAccount: UserAccount = {
+      id: "usr-" + regUser.email.replace(/[^a-zA-Z0-9]/g, "-"),
+      name: regUser.name,
+      email: regUser.email,
+      role: regUser.role,
+      authorizationLevel: regUser.authorizationLevel,
+      department: regUser.department,
+      occupation:
+        regUser.occupation ||
+        (regUser.role === "authority" ? "Municipal Operations Officer" : "Resident Citizen"),
+      phone: regUser.phone || "",
+      language: language,
+      city: "NovaCity",
+      preferredArea: regUser.preferredArea || "Central District",
+      notificationPrefs: {
+        traffic: true,
+        weather: true,
+        pollution: true,
+        water: true,
+        electricity: true,
+        civic: true,
+        emergency: true,
+      },
+      greenCitizenScore: regUser.role === "authority" ? 560 : 380,
+      goals: ["Monitor urban operations", "Manage civic services", "Track environmental health"],
+      isEmailVerified: true,
+      registeredAt: regUser.registeredAt,
+    };
+
+    setUser(authUserAccount);
+    if (regUser.role === "authority") {
+      setUserRole("authority");
+    } else {
+      setUserRole("citizen");
+    }
+
+    return { success: true };
   };
 
   const register = (
@@ -677,27 +805,24 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } else {
       data = nameOrData;
     }
-    setUser({
-      id: "usr-" + Date.now(),
-      name: data.name || "New Citizen",
-      email: data.email || "citizen@novacity.org",
-      language: (data.language as SupportedLanguage) || language,
-      city: "NovaCity",
-      preferredArea: data.preferredArea || "Central District",
-      notificationPrefs: data.notificationPrefs || {
-        traffic: true,
-        weather: true,
-        pollution: true,
-        water: true,
-        electricity: true,
-        civic: true,
-        emergency: true,
-      },
-      greenCitizenScore: 150,
-      goals: ["Reduce travel time", "Monitor air quality"],
-      role: "citizen",
-      isEmailVerified: true,
-    });
+
+    const cleanEmail = (data.email || email || "").trim().toLowerCase();
+    if (!cleanEmail) return false;
+
+    const authRegUser: AuthorizedRegistryUser = {
+      email: cleanEmail,
+      name: data.name || cleanEmail.split("@")[0],
+      role: data.role || "citizen",
+      authorizationLevel: data.role === "authority" ? "Municipal Authority" : "Verified Resident",
+      department: data.department || "Resident Community",
+      preferredArea: data.preferredArea || areaId || "Central District",
+      phone: data.phone,
+      occupation: data.occupation,
+      status: "Active",
+      registeredAt: new Date().toISOString(),
+    };
+
+    registerAuthorizedUser(authRegUser);
     return true;
   };
 
@@ -707,7 +832,26 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const updateProfile = (data: Partial<UserAccount>) => {
     if (user) {
-      setUser({ ...user, ...data });
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+
+      // Sync changes back to registry
+      setAuthorizedRegistry((prev) =>
+        prev.map((reg) => {
+          if (reg.email.toLowerCase() === user.email.toLowerCase()) {
+            return {
+              ...reg,
+              name: data.name ?? reg.name,
+              phone: data.phone ?? reg.phone,
+              occupation: data.occupation ?? reg.occupation,
+              department: data.department ?? reg.department,
+              preferredArea: data.preferredArea ?? reg.preferredArea,
+              role: data.role ?? reg.role,
+            };
+          }
+          return reg;
+        })
+      );
     }
   };
 
@@ -716,6 +860,11 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
       value={{
         user,
         currentUser: user,
+        isAuthenticated,
+        authorizedRegistry,
+        isEmailAuthorized,
+        getAuthorizedUser,
+        registerAuthorizedUser,
         login,
         register,
         logout,
@@ -746,6 +895,10 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         closeExplainModal,
         isConfidenceModalOpen,
         setIsConfidenceModalOpen,
+        isRootCauseModalOpen,
+        setIsRootCauseModalOpen,
+        openRootCauseModal,
+        closeRootCauseModal,
         isDecisionModalOpen,
         setIsDecisionModalOpen,
         isFixCityOpen,
@@ -769,6 +922,7 @@ export const CityProvider: React.FC<{ children: React.ReactNode }> = ({ children
         setIsLanguageModalOpen,
         openLanguageModal,
         t,
+        translateEntity,
         accessibility,
         accessibilitySettings: accessibility,
         updateAccessibility,

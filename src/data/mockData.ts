@@ -1,4 +1,67 @@
-import { CityZone, MonitoredArea, CivicReport, CityAlert, WhatIfScenario } from "../types";
+import { CityZone, MonitoredArea, CivicReport, CityAlert, WhatIfScenario, AuthorizedRegistryUser } from "../types";
+
+export const INITIAL_AUTHORIZED_REGISTRY: AuthorizedRegistryUser[] = [
+  {
+    email: "pakalapatisrihitha928@gmail.com",
+    name: "Srihitha Pakalapati",
+    role: "authority",
+    authorizationLevel: "Lead Administrator",
+    department: "Executive Urban Planning & City Command",
+    preferredArea: "Central District",
+    phone: "+91 98490 28412",
+    occupation: "Chief Urban Operations & AI Systems Director",
+    status: "Active",
+    registeredAt: "2026-01-15T08:30:00Z",
+  },
+  {
+    email: "admin@novacity.gov",
+    name: "Dr. Marcus Vance",
+    role: "authority",
+    authorizationLevel: "Municipal Authority",
+    department: "Integrated Municipal Operations Centre",
+    preferredArea: "Central District",
+    phone: "+1 (555) 019-2834",
+    occupation: "Municipal Commissioner",
+    status: "Active",
+    registeredAt: "2026-02-01T09:00:00Z",
+  },
+  {
+    email: "alex.rivera@novacity.org",
+    name: "Alex Rivera",
+    role: "citizen",
+    authorizationLevel: "Verified Resident",
+    department: "Civic Participation Advisory Board",
+    preferredArea: "Riverside Promenade",
+    phone: "+1 (555) 014-9821",
+    occupation: "Urban Data Analyst & Resident",
+    status: "Active",
+    registeredAt: "2026-02-10T11:20:00Z",
+  },
+  {
+    email: "sara.chen@novacity.gov",
+    name: "Dr. Sara Chen",
+    role: "authority",
+    authorizationLevel: "Urban Planner",
+    department: "Resilience & Environmental Risk Council",
+    preferredArea: "Green Valley Eco-District",
+    phone: "+1 (555) 018-7744",
+    occupation: "Director of Climate Adaptation",
+    status: "Active",
+    registeredAt: "2026-03-05T14:15:00Z",
+  },
+  {
+    email: "david.kim@novacity.org",
+    name: "David Kim",
+    role: "citizen",
+    authorizationLevel: "Verified Resident",
+    department: "Clean Mobility & Cycling Coalition",
+    preferredArea: "University & Research Park",
+    phone: "+1 (555) 012-3399",
+    occupation: "Resident Citizen & Commuter Representative",
+    status: "Active",
+    registeredAt: "2026-04-12T10:05:00Z",
+  },
+];
 
 export const BASE_NOVACITY_ZONES: CityZone[] = [
   {

@@ -36,12 +36,29 @@ import {
   CloudRain,
   Eye,
   Volume2,
+  Coins,
+  Building,
+  Siren,
+  GitBranch,
+  RefreshCw,
+  TreePine,
+  Waves,
+  Trash2,
 } from "lucide-react";
 
 interface CityHomePageProps {
   onNavigateTab: (
     tab:
+      | "brain"
       | "twin"
+      | "futurecity"
+      | "planning"
+      | "budget"
+      | "closedloop"
+      | "water"
+      | "heat"
+      | "waste"
+      | "emergency"
       | "briefing"
       | "map"
       | "copilot"
@@ -98,10 +115,12 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
     setIs90sDemoOpen,
     openExplainModal,
     setIsConfidenceModalOpen,
+    openRootCauseModal,
     openLanguageModal,
     setDemoScenario,
     accessibilitySettings,
     t,
+    translateEntity,
   } = useCity();
 
   const [activePersona, setActivePersona] = useState<PersonaFilter>("all");
@@ -111,6 +130,23 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
 
   // Comprehensive Catalog of all NovaCity Features
   const featuresList: FeatureCardData[] = [
+    {
+      id: "brain",
+      title: "City Brain — Central AI Engine",
+      category: "planner",
+      categoryLabel: "Core AI Intelligence",
+      badge: "10-Stream Fusion",
+      icon: Sparkles,
+      iconColor: "text-cyan-400",
+      iconBg: "bg-cyan-500/15 border-cyan-500/40",
+      description:
+        "Central AI cognition engine combining Traffic, Weather, Air Quality, Citizen Reports, Flood Risk, Transit, Emergency Alerts, and Historical Patterns into: Current Situation → Risk → Prediction → Action.",
+      bestFor: "Viewing master multi-stream city fusion and automated real-time action recommendations.",
+      actionText: "Open City Brain",
+      onClick: () => onNavigateTab("brain"),
+      highlight: true,
+      liveStats: "10 Real-time Streams Synchronized",
+    },
     {
       id: "twin",
       title: "Digital Twin & City DNA",
@@ -211,6 +247,153 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
       actionText: "View Grid Analytics",
       onClick: () => onNavigateTab("environment"),
       liveStats: `AQI ${currentZone.aqi} • ${currentZone.renewablePct}% Clean Energy`,
+    },
+    {
+      id: "futurecity",
+      title: "Future City Horizon Simulator (2030–2040)",
+      category: "planner",
+      categoryLabel: "Predictive Horizon",
+      badge: "2030 / 2035 / 2040",
+      icon: Compass,
+      iconColor: "text-purple-400",
+      iconBg: "bg-purple-500/15 border-purple-500/40",
+      description:
+        "Forecast long-term urbanization trajectories. Compares Business-As-Usual degradation vs. CityMind AI Adaptive Masterplan across 2030, 2035, and 2040.",
+      bestFor: "Long-term demographic, autonomous vehicle, and climate adaptation planning.",
+      actionText: "Open 2035 Horizon",
+      onClick: () => onNavigateTab("futurecity"),
+      highlight: true,
+      liveStats: "Side-by-Side BAU vs AI Masterplan",
+    },
+    {
+      id: "planning",
+      title: "AI Urban Planning & Facility Impact",
+      category: "planner",
+      categoryLabel: "Municipal Decision Support",
+      badge: "Multi-Criteria Matrix",
+      icon: Building,
+      iconColor: "text-indigo-400",
+      iconBg: "bg-indigo-500/15 border-indigo-500/40",
+      description:
+        "Simulate proposed municipal facilities (Metro Line, Sponge Park, Trauma Hospital, Solid Waste Plant) before capital commitment with AI feasibility scores.",
+      bestFor: "Evaluating zoning proposals, traffic delta, air quality impacts, and capital ROI.",
+      actionText: "Launch Urban Planner",
+      onClick: () => onNavigateTab("planning"),
+      highlight: true,
+      liveStats: "4 Master Proposals Ready",
+    },
+    {
+      id: "budget",
+      title: "AI Budget Allocation Simulator",
+      category: "planner",
+      categoryLabel: "Capital Expenditure Optimizer",
+      badge: "₹10 Cr Capital Pool",
+      icon: Coins,
+      iconColor: "text-emerald-400",
+      iconBg: "bg-emerald-500/15 border-emerald-500/40",
+      description:
+        "Simulate distribution across Drainage, Roads, Greenery, Streetlights, and Waste. Forecasts risk reduction percentage, public health ROI, and citizen satisfaction.",
+      bestFor: "Optimizing fiscal allocation for maximum risk mitigation.",
+      actionText: "Simulate Budget ROI",
+      onClick: () => onNavigateTab("budget"),
+      liveStats: "1-Click AI Optimal Preset",
+    },
+    {
+      id: "closedloop",
+      title: "Closed-Loop City Resolution Engine",
+      category: "planner",
+      categoryLabel: "Digital Feedback Loop",
+      badge: "7-Stage Lifecycle",
+      icon: RefreshCw,
+      iconColor: "text-cyan-400",
+      iconBg: "bg-cyan-500/15 border-cyan-500/40",
+      description:
+        "End-to-end municipal loop: Sense → Understand → Predict → Recommend → Act → Verify → Learn with before & after AI computer vision quality certification.",
+      bestFor: "Reviewing continuous lifecycle resolution for potholes, water leaks, and flood traps.",
+      actionText: "Explore Closed Loop",
+      onClick: () => onNavigateTab("closedloop"),
+      liveStats: "Autonomous Image Verification",
+    },
+    {
+      id: "water",
+      title: "Smart WaterMind & Acoustic Leak AI",
+      category: "planner",
+      categoryLabel: "Water Distribution",
+      badge: "Acoustic Subsurface AI",
+      icon: Droplets,
+      iconColor: "text-blue-400",
+      iconBg: "bg-blue-500/15 border-blue-500/40",
+      description:
+        "Monitors 6 acoustic distribution zones, water pressure gradients (PSI), contaminant PPM, and non-revenue water savings with 1-click AI pressure balancing.",
+      bestFor: "Detecting pipe fractures and optimizing reservoir discharge.",
+      actionText: "Open WaterMind",
+      onClick: () => onNavigateTab("water"),
+      liveStats: "4.2M Liters/Day Saved",
+    },
+    {
+      id: "heat",
+      title: "Urban Heat Island & Afforestation AI",
+      category: "planner",
+      categoryLabel: "Climate Adaptation",
+      badge: "Thermal Plume Modeling",
+      icon: Flame,
+      iconColor: "text-rose-400",
+      iconBg: "bg-rose-500/15 border-rose-500/40",
+      description:
+        "Identifies surface heat traps via concrete albedo, building density, and canopy deficit. Generates geocoded Native Neem & Peepal tree planting plans.",
+      bestFor: "Cooling dense concrete zones and tracking canopy coverage.",
+      actionText: "View Heat Intelligence",
+      onClick: () => onNavigateTab("heat"),
+      liveStats: "2,240 Target Tree Sites",
+    },
+    {
+      id: "waste",
+      title: "Smart Waste & Dynamic Route Fleet",
+      category: "planner",
+      categoryLabel: "Sanitation & Fleet",
+      badge: "Optical Bin Sensors",
+      icon: Trash2,
+      iconColor: "text-teal-400",
+      iconBg: "bg-teal-500/15 border-teal-500/40",
+      description:
+        "Live ultrasonic and optical fill monitoring for smart compactors. Dynamically generates AI fuel-optimized collection routes, avoiding empty bins.",
+      bestFor: "Eliminating garbage overflows and cutting municipal diesel emissions.",
+      actionText: "Manage Waste Fleet",
+      onClick: () => onNavigateTab("waste"),
+      liveStats: "-34% Fleet Fuel Consumption",
+    },
+    {
+      id: "emergency",
+      title: "Emergency Response Route Optimizer",
+      category: "emergency",
+      categoryLabel: "Golden-Hour Dispatch",
+      badge: "Fastest Green-Wave",
+      icon: Siren,
+      iconColor: "text-rose-500",
+      iconBg: "bg-rose-500/15 border-rose-500/40",
+      description:
+        "Calculates fastest emergency corridors for Trauma Ambulances, Fire Tenders, and Police with automated Traffic Signal Preemption (+24s Green Light).",
+      bestFor: "Cutting emergency response times by -4.8 minutes.",
+      actionText: "Open Emergency AI",
+      onClick: () => onNavigateTab("emergency"),
+      liveStats: "Traffic Signal Preemption Active",
+    },
+    {
+      id: "rootcause",
+      title: "AI Root-Cause Explainability Graph",
+      category: "interactive",
+      categoryLabel: "Explainable AI",
+      badge: "Causal Factor Tree",
+      icon: GitBranch,
+      iconColor: "text-cyan-300",
+      iconBg: "bg-cyan-500/15 border-cyan-500/40",
+      description:
+        "Deconstructs surface symptoms into weighted root causes (e.g. 38% Rain + 26% Flyover Repair + 21% School Dismissal) with pinpoint interventions.",
+      bestFor: "Understanding 'Why' an incident happened rather than just seeing a high metric.",
+      actionText: "Open Root Cause AI",
+      onClick: () => openRootCauseModal(),
+      highlight: true,
+      liveStats: "Explainable Multi-Vector Graph",
     },
     {
       id: "simulator",
@@ -447,24 +630,24 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
                 className="px-3 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 flex items-center gap-1.5 transition-colors font-medium"
               >
                 <Globe className="w-3.5 h-3.5 text-teal-400" />
-                <span>Languages</span>
+                <span>{t("languages", "Languages")}</span>
               </button>
               <button
                 onClick={onOpenAreaPicker}
                 className="px-3 py-1 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-xs text-white/80 flex items-center gap-1.5 transition-colors font-medium"
               >
                 <MapPin className="w-3.5 h-3.5 text-cyan-400" />
-                <span>Zone: <strong className="text-white">{currentZone.name}</strong></span>
+                <span>{t("zone", "Zone")}: <strong className="text-white">{translateEntity(currentZone.name)}</strong></span>
               </button>
             </div>
           </div>
 
           <div className="max-w-3xl space-y-2">
             <h1 className="text-2xl sm:text-4xl font-black text-white tracking-tight uppercase font-display leading-tight">
-              Welcome to <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-300 to-blue-400">NovaCity</span>
+              {t("welcomeTo", "Welcome to")} <span className="text-transparent bg-clip-text bg-gradient-to-r from-teal-400 via-cyan-300 to-blue-400">NovaCity</span>
             </h1>
             <p className="text-sm sm:text-base text-white/80 leading-relaxed">
-              Your real-time cognitive urban interface. Powered by multi-agent AI, predictive simulation, and live IoT telemetry. Discover all tools below or launch features tailored to your needs.
+              {t("heroSubtitle", "Your real-time cognitive urban interface. Powered by multi-agent AI, predictive simulation, and live IoT telemetry. Discover all tools below or launch features tailored to your needs.")}
             </p>
           </div>
 
@@ -475,13 +658,13 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="bg-black/40 hover:bg-black/60 border border-white/10 hover:border-teal-500/40 p-3 rounded-2xl cursor-pointer transition-all group"
             >
               <div className="flex items-center justify-between text-white/50 text-[10px] uppercase font-bold tracking-wider">
-                <span>City Health Score</span>
+                <span>{t("cityHealthScore", "City Health Score")}</span>
                 <Activity className="w-3.5 h-3.5 text-teal-400 group-hover:scale-110 transition-transform" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
                 {currentZone.healthScore}<span className="text-xs text-white/40 font-normal">/100</span>
               </div>
-              <span className="text-[10px] text-teal-400 font-medium">{currentZone.healthStatus}</span>
+              <span className="text-[10px] text-teal-400 font-medium">{translateEntity(currentZone.healthStatus)}</span>
             </div>
 
             <div
@@ -489,14 +672,14 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="bg-black/40 hover:bg-black/60 border border-white/10 hover:border-teal-500/40 p-3 rounded-2xl cursor-pointer transition-all group"
             >
               <div className="flex items-center justify-between text-white/50 text-[10px] uppercase font-bold tracking-wider">
-                <span>Air Quality (AQI)</span>
+                <span>{t("airQualityAqi", "Air Quality (AQI)")}</span>
                 <Wind className="w-3.5 h-3.5 text-emerald-400 group-hover:scale-110 transition-transform" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
                 {currentZone.aqi}
               </div>
               <span className={`text-[10px] font-medium ${currentZone.aqi > 100 ? "text-amber-400" : "text-emerald-400"}`}>
-                {currentZone.aqiStatus}
+                {translateEntity(currentZone.aqiStatus)}
               </span>
             </div>
 
@@ -505,13 +688,13 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="bg-black/40 hover:bg-black/60 border border-white/10 hover:border-teal-500/40 p-3 rounded-2xl cursor-pointer transition-all group"
             >
               <div className="flex items-center justify-between text-white/50 text-[10px] uppercase font-bold tracking-wider">
-                <span>Traffic Flow</span>
+                <span>{t("trafficFlow", "Traffic Flow")}</span>
                 <Navigation className="w-3.5 h-3.5 text-blue-400 group-hover:scale-110 transition-transform" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
                 {currentZone.trafficSpeed} <span className="text-xs text-white/40 font-normal">km/h</span>
               </div>
-              <span className="text-[10px] text-cyan-400 font-medium">{currentZone.trafficCongestion} Congestion</span>
+              <span className="text-[10px] text-cyan-400 font-medium">{translateEntity(currentZone.trafficCongestion)} {t("congestion", "Congestion")}</span>
             </div>
 
             <div
@@ -519,27 +702,27 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="bg-black/40 hover:bg-black/60 border border-white/10 hover:border-teal-500/40 p-3 rounded-2xl cursor-pointer transition-all group"
             >
               <div className="flex items-center justify-between text-white/50 text-[10px] uppercase font-bold tracking-wider">
-                <span>Clean Energy Mix</span>
+                <span>{t("cleanEnergyMix", "Clean Energy Mix")}</span>
                 <Zap className="w-3.5 h-3.5 text-amber-400 group-hover:scale-110 transition-transform" />
               </div>
               <div className="text-xl sm:text-2xl font-black text-white font-mono mt-0.5">
                 {currentZone.renewablePct}%
               </div>
-              <span className="text-[10px] text-amber-300 font-medium">Solar & Wind Active</span>
+              <span className="text-[10px] text-amber-300 font-medium">{t("solarWindActive", "Solar & Wind Active")}</span>
             </div>
           </div>
 
           {/* Quick Action Buttons */}
           <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
             <span className="text-[11px] font-mono uppercase font-bold text-white/40 mr-1">
-              Popular Actions:
+              {t("popularActions", "Popular Actions")}:
             </span>
             <button
               onClick={() => onNavigateTab("copilot")}
               className="px-3.5 py-1.5 rounded-xl bg-teal-500 hover:bg-teal-400 text-black font-extrabold text-xs flex items-center gap-1.5 shadow-lg shadow-teal-500/20 transition-all uppercase tracking-wider"
             >
               <Bot className="w-4 h-4" />
-              <span>Talk to Copilot</span>
+              <span>{t("talkToCopilot", "Talk to Copilot")}</span>
             </button>
 
             <button
@@ -550,7 +733,7 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-extrabold text-xs flex items-center gap-1.5 transition-all uppercase tracking-wider"
             >
               <Camera className="w-4 h-4 text-amber-400" />
-              <span>Report Issue</span>
+              <span>{t("reportIssue", "Report Issue")}</span>
             </button>
 
             <button
@@ -558,7 +741,7 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="px-3.5 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 border border-white/20 text-white font-extrabold text-xs flex items-center gap-1.5 transition-all uppercase tracking-wider"
             >
               <Layers className="w-4 h-4 text-cyan-400" />
-              <span>Digital Twin</span>
+              <span>{t("digitalTwin", "Digital Twin")}</span>
             </button>
 
             <button
@@ -566,7 +749,7 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="px-3.5 py-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-200 font-extrabold text-xs flex items-center gap-1.5 transition-all uppercase tracking-wider"
             >
               <BookOpen className="w-4 h-4 text-amber-400" />
-              <span>Interactive Story</span>
+              <span>{t("interactiveStory", "Interactive Story")}</span>
             </button>
 
             <button
@@ -574,7 +757,7 @@ export const CityHomePage: React.FC<CityHomePageProps> = ({
               className="px-3.5 py-1.5 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 border border-rose-500/40 text-rose-200 font-extrabold text-xs flex items-center gap-1.5 transition-all uppercase tracking-wider"
             >
               <Flame className="w-4 h-4 text-rose-400" />
-              <span>Simulate Storm/Heatwave</span>
+              <span>{t("simulateStormHeatwave", "Simulate Storm/Heatwave")}</span>
             </button>
           </div>
         </div>

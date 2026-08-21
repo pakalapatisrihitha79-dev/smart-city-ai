@@ -1,6 +1,8 @@
 import React from "react";
 import { useCity } from "../context/CityContext";
 import { SupportedLanguage, LANGUAGES } from "../utils/translations";
+import { IntelligenceGridStatus } from "./IntelligenceGridStatus";
+import { GlobalCitySearch } from "./GlobalCitySearch";
 import {
   Activity,
   Globe,
@@ -25,6 +27,8 @@ interface HeaderNavProps {
   onOpenAuth: () => void;
   onOpenAccessibility: () => void;
   onOpenDemoControl: () => void;
+  onSelectTab?: (tab: string) => void;
+  onOpenCivicReport?: () => void;
 }
 
 export const HeaderNav: React.FC<HeaderNavProps> = ({
@@ -34,6 +38,8 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   onOpenAuth,
   onOpenAccessibility,
   onOpenDemoControl,
+  onSelectTab,
+  onOpenCivicReport,
 }) => {
   const {
     monitoredAreas,
@@ -66,35 +72,37 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
   const currentLangObj = LANGUAGES.find((l) => l.code === language) || LANGUAGES[0];
 
   return (
-    <header className="bg-[#0D1117]/95 border-b border-white/10 sticky top-0 z-40 backdrop-blur-md px-4 py-3 shadow-2xl">
-      <div className="max-w-7xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-3">
-        {/* Brand & Subtitle */}
-        <div className="flex items-center justify-between">
+    <header className="bg-[#0D1117]/95 border-b border-white/10 sticky top-0 z-40 backdrop-blur-md px-4 py-2.5 shadow-2xl">
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-2.5">
+        {/* Brand & Mobile Controls Row */}
+        <div className="flex items-center justify-between gap-3">
           <div
             onClick={onNavigateHome}
-            className={`flex items-center gap-3 ${onNavigateHome ? "cursor-pointer group" : ""}`}
+            className={`flex items-center gap-2.5 ${onNavigateHome ? "cursor-pointer group" : ""}`}
             title="Go to CityMind AI Home Hub"
           >
-            <div className="w-8 h-8 bg-teal-500 rounded-full flex items-center justify-center text-black font-black text-xs shadow-[0_0_12px_rgba(20,184,166,0.5)] shrink-0 group-hover:scale-105 transition-transform">
+            <div className="w-8 h-8 bg-teal-500 rounded-xl flex items-center justify-center text-black font-black text-xs shadow-[0_0_12px_rgba(20,184,166,0.5)] shrink-0 group-hover:scale-105 transition-transform">
               CM
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-xl font-black tracking-tighter text-white uppercase font-display group-hover:text-teal-300 transition-colors">
+                <h1 className="text-lg font-black tracking-tighter text-white uppercase font-display group-hover:text-teal-300 transition-colors">
                   CityMind <span className="text-teal-400">AI</span>
                 </h1>
-                <span className="text-[9px] bg-white/5 text-teal-300 font-extrabold px-2 py-0.5 rounded-full border border-teal-500/30 uppercase tracking-widest font-mono">
-                  LIVE INTERFACE
+                <span className="text-[9px] bg-white/5 text-teal-300 font-extrabold px-1.5 py-0.5 rounded-full border border-teal-500/30 uppercase tracking-widest font-mono">
+                  OS
                 </span>
               </div>
-              <p className="text-[10px] font-bold text-white/50 tracking-[0.2em] uppercase">
-                {t("tagline", "Predict • Understand • Act — Living City Interface")}
+              <p className="text-[9px] font-bold text-white/50 tracking-[0.15em] uppercase hidden sm:block">
+                {t("tagline", "Predict • Understand • Act — Living City")}
               </p>
             </div>
           </div>
 
           {/* Mobile Right Controls */}
           <div className="flex md:hidden items-center gap-1.5">
+            <IntelligenceGridStatus />
+
             <button
               onClick={openLanguageModal}
               className="px-2 py-1.5 bg-teal-500/15 hover:bg-teal-500/25 border border-teal-500/40 rounded-xl text-teal-300 font-bold text-xs flex items-center gap-1 shrink-0"
@@ -118,6 +126,19 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
               <User className="w-4 h-4" />
             </button>
           </div>
+        </div>
+
+        {/* Center: Global Quick Search Bar */}
+        <div className="w-full lg:max-w-md xl:max-w-lg">
+          <GlobalCitySearch
+            onSelectTab={onSelectTab}
+            onOpenAreaCompare={onOpenAreaCompare}
+            onOpenDemoControl={onOpenDemoControl}
+            onOpenAuth={onOpenAuth}
+            onOpenAccessibility={onOpenAccessibility}
+            onOpenCivicReport={onOpenCivicReport}
+            onOpenAreaPicker={onOpenAreaPicker}
+          />
         </div>
 
         {/* Monitored Areas Bar & Controls */}
@@ -201,6 +222,11 @@ export const HeaderNav: React.FC<HeaderNavProps> = ({
             <Building2 className="w-3.5 h-3.5 text-amber-400" />
             <span className="hidden sm:inline">{isAuthorityMode ? "Authority Operations" : "Citizen View"}</span>
           </button>
+
+          {/* Desktop Real-time Intelligence Grid Status Indicator */}
+          <div className="hidden md:flex items-center shrink-0">
+            <IntelligenceGridStatus />
+          </div>
 
           {/* Desktop Right Controls */}
           <div className="hidden md:flex items-center gap-1.5 shrink-0">

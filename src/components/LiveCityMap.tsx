@@ -31,6 +31,11 @@ import {
   AlertTriangle,
   FastForward,
   X,
+  TreePine,
+  Lightbulb,
+  Siren,
+  Sparkles,
+  Wrench,
 } from "lucide-react";
 
 export const LiveCityMap: React.FC = () => {
@@ -66,8 +71,10 @@ export const LiveCityMap: React.FC = () => {
     energy: true,
   });
 
-  const [heatmapMode, setHeatmapMode] = useState<"none" | "traffic" | "aqi" | "combined">("traffic");
-  const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.7);
+  const [heatmapMode, setHeatmapMode] = useState<
+    "none" | "traffic" | "flood" | "garbage" | "roaddamage" | "aqi" | "streetlights" | "emergency" | "greenery" | "highest_risk" | "combined"
+  >("traffic");
+  const [heatmapOpacity, setHeatmapOpacity] = useState<number>(0.75);
 
   const [selectedMapZone, setSelectedMapZone] = useState<CityZone | null>(null);
   const [showLayerPicker, setShowLayerPicker] = useState(false);
@@ -139,12 +146,32 @@ export const LiveCityMap: React.FC = () => {
           if (currentScenario === "heavy_traffic") {
             intensity = Math.min(1.0, intensity + 0.2);
           }
+        } else if (heatmapMode === "flood") {
+          intensity = Math.min(1.0, zone.floodRiskPct / 100);
+          if (zone.id === "zone-4") intensity = Math.max(intensity, 0.92); // Lowland flood trap
+        } else if (heatmapMode === "garbage") {
+          intensity = zone.type.includes("Commercial") ? 0.92 : zone.type.includes("Industrial") ? 0.74 : 0.38;
+        } else if (heatmapMode === "roaddamage") {
+          intensity = zone.roadHealthScore < 50 ? 0.95 : zone.roadHealthScore < 75 ? 0.65 : 0.25;
         } else if (heatmapMode === "aqi") {
           if (zone.aqi > 150) intensity = 0.98;
           else if (zone.aqi > 110) intensity = 0.82;
           else if (zone.aqi > 75) intensity = 0.58;
           else if (zone.aqi > 50) intensity = 0.38;
           else intensity = 0.20;
+        } else if (heatmapMode === "streetlights") {
+          intensity = zone.streetlightHealthPct < 70 ? 0.94 : zone.streetlightHealthPct < 85 ? 0.62 : 0.18;
+        } else if (heatmapMode === "emergency") {
+          intensity = zone.emergencyResponseTimeMins > 12 ? 0.92 : zone.emergencyResponseTimeMins > 8 ? 0.64 : 0.28;
+        } else if (heatmapMode === "greenery") {
+          // Invert greenery to show shortage/canopy deficit
+          const greenPct = zone.type.includes("Green") ? 45 : zone.type.includes("Riverside") ? 32 : 12;
+          intensity = (100 - greenPct * 2) / 100;
+        } else if (heatmapMode === "highest_risk") {
+          const trafficVal = zone.traffic === "Congested" ? 1.0 : zone.traffic === "High" ? 0.8 : 0.4;
+          const floodVal = zone.floodRiskPct / 100;
+          const roadVal = (100 - zone.roadHealthScore) / 100;
+          intensity = Math.min(1.0, trafficVal * 0.35 + floodVal * 0.35 + roadVal * 0.3);
         } else if (heatmapMode === "combined") {
           const trafficVal = zone.traffic === "Congested" ? 1.0 : zone.traffic === "High" ? 0.8 : zone.traffic === "Moderate" ? 0.5 : 0.2;
           const aqiVal = Math.min(1.0, zone.aqi / 160);
@@ -519,17 +546,24 @@ export const LiveCityMap: React.FC = () => {
       </div>
 
       {/* Heatmap Mode Selector Pills Bar */}
-      <div className="absolute top-14 left-3 z-20 flex items-center gap-1.5 bg-[#0D1117]/95 border border-slate-800/90 p-1 rounded-xl shadow-xl backdrop-blur-md overflow-x-auto max-w-[calc(100vw-2rem)] sm:max-w-none">
-        <span className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider px-2 flex items-center gap-1 shrink-0">
-          <Flame className="w-3.5 h-3.5 text-orange-400 animate-pulse" />
-          <span className="hidden sm:inline">Heatmap:</span>
+      <div className="absolute top-14 left-3 z-20 flex items-center gap-1.5 bg-[#0D1117]/95 border border-cyan-500/30 p-1.5 rounded-2xl shadow-2xl backdrop-blur-md overflow-x-auto max-w-[calc(100vw-2rem)] no-scrollbar">
+        <span className="text-[10px] font-black text-cyan-400 uppercase tracking-wider px-2 flex items-center gap-1 shrink-0 font-mono">
+          <Flame className="w-3.5 h-3.5 text-cyan-400 animate-pulse" />
+          <span>AI HEATMAP:</span>
         </span>
 
         {[
+          { id: "highest_risk", label: "⚠️ Highest Risk", icon: ShieldAlert, highlight: true },
+          { id: "traffic", label: "🚗 Traffic", icon: Car },
+          { id: "flood", label: "🌊 Flooding", icon: CloudRain },
+          { id: "garbage", label: "🗑️ Garbage", icon: Trash2 },
+          { id: "roaddamage", label: "🛣️ Road Damage", icon: Wrench },
+          { id: "aqi", label: "🌫️ Pollution", icon: Wind },
+          { id: "streetlights", label: "💡 Streetlights", icon: Lightbulb },
+          { id: "emergency", label: "🚨 Emergency", icon: Siren },
+          { id: "greenery", label: "🌳 Tree Deficit", icon: TreePine },
+          { id: "combined", label: "Combined", icon: Activity },
           { id: "none", label: "Off", icon: EyeOff },
-          { id: "traffic", label: "Traffic Density", icon: Car },
-          { id: "aqi", label: "Air Quality (AQI)", icon: Wind },
-          { id: "combined", label: "Combined Stress", icon: Activity },
         ].map((mode) => {
           const IconComp = mode.icon;
           const isActive = heatmapMode === mode.id;
@@ -537,10 +571,12 @@ export const LiveCityMap: React.FC = () => {
             <button
               key={mode.id}
               onClick={() => setHeatmapMode(mode.id as any)}
-              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold flex items-center gap-1.5 transition-all whitespace-nowrap ${
+              className={`px-2.5 py-1 rounded-xl text-[10px] font-bold flex items-center gap-1.5 transition-all whitespace-nowrap uppercase tracking-wider ${
                 isActive
-                  ? "bg-gradient-to-r from-orange-500 to-rose-600 text-white shadow-md font-black"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
+                  ? "bg-cyan-500 text-black shadow-lg shadow-cyan-500/30 font-black"
+                  : mode.highlight
+                  ? "bg-rose-950/60 text-rose-300 border border-rose-500/40 hover:bg-rose-900"
+                  : "text-slate-300 hover:text-white hover:bg-white/5"
               }`}
             >
               <IconComp className="w-3 h-3" />

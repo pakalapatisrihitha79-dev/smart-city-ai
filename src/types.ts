@@ -54,6 +54,7 @@ export interface UserAccount {
   email: string;
   phone?: string;
   occupation?: string;
+  department?: string;
   language: string; // 'en' | 'te' | 'hi' | 'ta' | 'kn' | 'ml' | 'mr' | 'bn'
   city: string; // 'NovaCity'
   district?: string;
@@ -73,6 +74,21 @@ export interface UserAccount {
   goals: string[];
   role: "citizen" | "authority";
   isEmailVerified: boolean;
+  authorizationLevel?: "Lead Administrator" | "Municipal Authority" | "Urban Planner" | "Verified Resident";
+  registeredAt?: string;
+}
+
+export interface AuthorizedRegistryUser {
+  email: string;
+  name: string;
+  role: "citizen" | "authority";
+  authorizationLevel: "Lead Administrator" | "Municipal Authority" | "Urban Planner" | "Verified Resident";
+  department: string;
+  preferredArea: string;
+  phone?: string;
+  occupation?: string;
+  status: "Active" | "Restricted" | "Pending Verification";
+  registeredAt: string;
 }
 
 export interface CivicReport {
@@ -295,3 +311,82 @@ export interface ImpactRadiusData {
   affectedTrips: number;
   description: string;
 }
+
+export interface CityHistoricalPattern {
+  id: string;
+  title: string;
+  dayOfWeek: string;
+  timeWindow: string;
+  zoneId: CityZoneId;
+  zoneName: string;
+  recurrenceRatePct: number;
+  confidenceScore: number;
+  category: "Traffic" | "Drainage" | "Pollution" | "Waste" | "Energy" | "Civic";
+  triggerSources: string[]; // ["Historical 52-week traffic", "Weather Radar", "Complaint Clusters", "School Calendar"]
+  predictedImpact: string;
+  proactivePlaybook: string;
+}
+
+export interface TreePlantingLocation {
+  id: string;
+  rank: number;
+  name: string;
+  zoneName: string;
+  zoneId: CityZoneId;
+  heatAnomalyC: number;
+  canopyCoverPct: number;
+  footfallPerDay: number;
+  pm25Level: number;
+  shadeDeficitPct: number;
+  recommendedSaplingsCount: number;
+  recommendedSpecies: string[];
+  expectedCoolingDeltaC: number;
+  annualCo2CaptureKg: number;
+  costEstimate: string;
+  feasibilityScore: number;
+}
+
+export interface UrbanPlanProposal {
+  id: string;
+  facilityType: "Hospital" | "School" | "TransitHub" | "Clinic" | "StormwaterPark" | "SolarMicrogrid";
+  title: string;
+  targetZoneId: CityZoneId;
+  targetZoneName: string;
+  populationServed: number;
+  trafficImpactPct: number;
+  environmentalScore: number;
+  emergencyAccessibilityDeltaMins: number;
+  nearestSimilarDistanceKm: number;
+  aiFeasibilityScore: number;
+  verdict: "Strongly Recommended" | "Recommended with Mitigation" | "Not Recommended";
+  keyBenefits: string[];
+  mitigationsRequired: string[];
+}
+
+export interface WaterSensorNode {
+  id: string;
+  type: "tank" | "pipeline" | "sump" | "pump" | "quality";
+  name: string;
+  zoneName: string;
+  status: "NORMAL" | "WARNING" | "CRITICAL" | "STANDBY";
+  metricLabel: string;
+  metricValue: string;
+  numericLevelPct: number;
+  anomalyDetected?: string;
+  pressurePsi?: number;
+  flowRateLps?: number;
+  turbidityNtu?: number;
+}
+
+export interface WasteBinSensor {
+  id: string;
+  code: string;
+  locationName: string;
+  zoneName: string;
+  fillPct: number;
+  hoursUntilFull: number;
+  wasteType: "Dry Recyclable" | "Organic / Wet" | "Mixed Municipal" | "E-Waste";
+  priorityLevel: "NORMAL" | "ELEVATED" | "CRITICAL";
+  lastEmptiedHoursAgo: number;
+}
+

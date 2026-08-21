@@ -26,23 +26,26 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
   const {
     currentUser,
     login,
-    register,
+    registerAuthorizedUser,
     logout,
     updateProfile,
     allZones,
     primaryAreaId,
     setPrimaryAreaId,
+    authorizedRegistry,
   } = useCity();
 
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   // Form State
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
   const [occupation, setOccupation] = useState("Resident Citizen");
+  const [department, setDepartment] = useState("Urban Operations");
+  const [role, setRole] = useState<"citizen" | "authority">("citizen");
   const [city, setCity] = useState("NovaCity");
   const [district, setDistrict] = useState("Central District");
   const [preferredArea, setPreferredArea] = useState<string>(primaryAreaId);
@@ -66,6 +69,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       setEmail(currentUser.email || "");
       setPhone(currentUser.phone || "");
       setOccupation(currentUser.occupation || "Resident Citizen");
+      setDepartment(currentUser.department || "Urban Operations");
+      setRole(currentUser.role || "citizen");
       setCity(currentUser.city || "NovaCity");
       setDistrict(currentUser.district || "Central District");
       setPreferredArea(currentUser.preferredArea || primaryAreaId);
@@ -76,7 +81,6 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       }
     } else {
       setEmail("");
-      setPassword("");
       setName("");
       setPhone("");
     }
@@ -86,27 +90,37 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
   const handleLoginSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email.trim() || !password.trim()) return;
+    setErrorMessage(null);
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail) {
+      setErrorMessage("Please enter a valid email address.");
+      return;
+    }
 
     if (isRegisterMode) {
-      register(
-        {
-          name: name.trim() || email.split("@")[0],
-          email: email.trim(),
-          phone: phone.trim(),
-          occupation,
-          city: city.trim() || "NovaCity",
-          district: district.trim(),
-          preferredArea,
-          preferredTransport,
-          bio,
-          notificationPrefs,
-        },
-        email.trim(),
-        preferredArea
-      );
+      const regRes = registerAuthorizedUser({
+        email: cleanEmail,
+        name: name.trim() || cleanEmail.split("@")[0],
+        role: role,
+        authorizationLevel: role === "authority" ? "Municipal Authority" : "Verified Resident",
+        department: department.trim() || "Resident Community",
+        preferredArea: preferredArea,
+        phone: phone.trim(),
+        occupation: occupation.trim(),
+        status: "Active",
+        registeredAt: new Date().toISOString(),
+      });
+
+      if (!regRes.success) {
+        setErrorMessage(regRes.error || "Registration failed.");
+        return;
+      }
     } else {
-      login(email.trim(), password.trim());
+      const res = login(cleanEmail);
+      if (!res.success) {
+        setErrorMessage(res.error || "Unauthorized email ID. Access restricted.");
+        return;
+      }
     }
 
     setSaveSuccess(true);
@@ -125,6 +139,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
       email: email.trim() || currentUser.email,
       phone: phone.trim(),
       occupation,
+      department,
       city: city.trim() || "NovaCity",
       district: district.trim(),
       preferredArea,
@@ -396,34 +411,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
               )}
 
               <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1">EMAIL ADDRESS *</label>
+                <label className="text-[10px] font-bold text-slate-400 block mb-1">REGISTERED EMAIL ADDRESS *</label>
                 <div className="relative">
                   <Mail className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
                   <input
                     type="email"
                     required
-                    placeholder="your.email@example.com"
+                    placeholder="e.g. pakalapatisrihitha928@gmail.com"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errorMessage) setErrorMessage(null);
+                    }}
                     className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-teal-500 text-xs font-mono"
                   />
                 </div>
               </div>
 
-              <div>
-                <label className="text-[10px] font-bold text-slate-400 block mb-1">PASSWORD *</label>
-                <div className="relative">
-                  <Lock className="w-4 h-4 absolute left-3 top-2.5 text-slate-500" />
-                  <input
-                    type="password"
-                    required
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-9 pr-3 py-2 text-slate-100 focus:outline-none focus:border-teal-500 text-xs"
-                  />
+              {errorMessage && (
+                <div className="p-3 bg-rose-950/70 border border-rose-500/50 rounded-xl text-xs text-rose-300 font-medium">
+                  {errorMessage}
                 </div>
-              </div>
+              )}
 
               {isRegisterMode && (
                 <>
@@ -440,14 +449,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                     </div>
 
                     <div>
-                      <label className="text-[10px] font-bold text-slate-400 block mb-1">ROLE / OCCUPATION</label>
-                      <input
-                        type="text"
-                        placeholder="Resident Citizen"
-                        value={occupation}
-                        onChange={(e) => setOccupation(e.target.value)}
+                      <label className="text-[10px] font-bold text-slate-400 block mb-1">ROLE</label>
+                      <select
+                        value={role}
+                        onChange={(e) => setRole(e.target.value as "citizen" | "authority")}
                         className="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-slate-100 focus:outline-none focus:border-teal-500 text-xs"
-                      />
+                      >
+                        <option value="citizen">Resident Citizen</option>
+                        <option value="authority">Municipal Authority</option>
+                      </select>
                     </div>
                   </div>
 
@@ -470,9 +480,9 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
 
               <button
                 type="submit"
-                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition-colors mt-2 uppercase tracking-wider text-xs"
+                className="w-full bg-teal-600 hover:bg-teal-500 text-white font-bold py-2.5 rounded-xl shadow-lg transition-colors mt-2 uppercase tracking-wider text-xs cursor-pointer"
               >
-                {isRegisterMode ? "REGISTER CITIZEN ACCOUNT" : "SIGN IN WITH EMAIL"}
+                {isRegisterMode ? "REGISTER & AUTHORIZE EMAIL" : "VERIFY EMAIL & SIGN IN"}
               </button>
 
               <div className="text-center pt-2">
@@ -481,7 +491,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose }) => {
                   onClick={() => setIsRegisterMode(!isRegisterMode)}
                   className="text-teal-400 hover:underline text-[11px] font-semibold"
                 >
-                  {isRegisterMode ? "Already registered? Sign In with Email" : "New to CityMind? Register Account"}
+                  {isRegisterMode ? "Already registered? Sign In with Email" : "New Email? Register in Authorized Directory"}
                 </button>
               </div>
             </form>
